@@ -112,7 +112,7 @@ class _PracticePlayerScreenState extends State<PracticePlayerScreen> {
               ] else if (isPlaying) ...[
                 // Playing Phase
                 _buildPlayingPhase(),
-              ] else ...[
+              ] else if (isCompleted) ...[
                 // Completion Phase
                 _buildCompletionPhase(),
               ],
@@ -443,91 +443,203 @@ class _PracticePlayerScreenState extends State<PracticePlayerScreen> {
 
     return Column(
       children: [
-        // Practice Info
+        // Practice Info Card - Enhanced Design
         CustomCard(
-          child: Column(
-            children: [
-              Icon(
-                _getPracticeIcon(currentPractice!.title),
-                size: ResponsiveUtils.getResponsiveIconSize(context, 48.0),
-                color: AppColors.primaryCTA,
+          child: Container(
+            padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppColors.primaryCTA.withValues(alpha: 0.1),
+                  AppColors.secondaryCTA.withValues(alpha: 0.05),
+                ],
               ),
-              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
-              Text(
-                currentPractice!.title,
-                style: AppTypography.headlineSmall(context).copyWith(
-                  color: AppColors.textLight,
-                  fontWeight: FontWeight.bold,
+              borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+            ),
+            child: Column(
+              children: [
+                // Icon with enhanced styling
+                Container(
+                  padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryCTA.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primaryCTA.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _getPracticeIcon(currentPractice!.title),
+                    size: ResponsiveUtils.getResponsiveIconSize(context, 48.0),
+                    color: AppColors.primaryCTA,
+                  ),
                 ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
-              Text(
-                '$selectedRideType • $selectedDuration minutes',
-                style: AppTypography.bodyMedium(context).copyWith(
-                  color: AppColors.textSecondary,
+                SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
+                
+                // Title with better typography
+                Text(
+                  currentPractice!.title,
+                  style: AppTypography.headlineSmall(context).copyWith(
+                    color: AppColors.textLight,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
+                SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.75),
+                
+                // Subtitle with enhanced styling
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: ResponsiveUtils.getResponsiveSpacing(context) * 0.75,
+                    vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: AppColors.primaryCTA.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.access_time,
+                        color: AppColors.primaryCTA,
+                        size: 16,
+                      ),
+                      SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+                      Text(
+                        '$selectedRideType • $selectedDuration minutes',
+                        style: AppTypography.bodyMedium(context).copyWith(
+                          color: AppColors.primaryCTA,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
+
+        // Audio Player with enhanced styling
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryCTA.withValues(alpha: 0.1),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
             ],
           ),
+          child: AudioPlayerWidget(
+            audioUrl: currentPractice!.audioUrl,
+            onComplete: _onPracticeComplete,
+            onRestart: _restartPractice,
+            practiceDuration: Duration(minutes: selectedDuration ?? 5),
+            practiceElapsed: currentPosition,
+            practiceName: currentPractice!.title,
+          ),
         ),
-        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
+        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
 
-        // Audio Player
-        AudioPlayerWidget(
-          audioUrl: currentPractice!.audioUrl,
-          onComplete: _onPracticeComplete,
-          onRestart: _restartPractice,
-          practiceDuration: Duration(minutes: selectedDuration ?? 5),
-          practiceElapsed: currentPosition,
+        // Practice Text Toggle - Enhanced button
+        Center(
+          child: Container(
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.of(context).size.width * 0.7, // Limit width to 70% of screen
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.secondaryCTA.withValues(alpha: 0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: CustomButton(
+              text: showPracticeText ? 'Hide Practice Text' : 'Show Practice Text',
+              icon: showPracticeText ? Icons.visibility_off : Icons.visibility,
+              onPressed: () {
+                setState(() {
+                  showPracticeText = !showPracticeText;
+                });
+                
+                // Scroll to top when toggling practice text
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (_scrollController.hasClients) {
+                    _scrollController.animateTo(
+                      0,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                    );
+                  }
+                });
+              },
+              type: ButtonType.secondary,
+            ),
+          ),
         ),
-        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
+        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
 
-        // Practice Text Toggle
-        CustomButton(
-          text: showPracticeText ? 'Hide Practice Text' : 'Show Practice Text',
-          icon: showPracticeText ? Icons.visibility_off : Icons.visibility,
-          onPressed: () {
-            setState(() {
-              showPracticeText = !showPracticeText;
-            });
-            
-            // Scroll to top when toggling practice text
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (_scrollController.hasClients) {
-                _scrollController.animateTo(
-                  0,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              }
-            });
-          },
-          type: ButtonType.secondary,
-        ),
-        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
-
-        // Practice Text
+        // Practice Text - Enhanced card
         if (showPracticeText)
           CustomCard(
             child: Container(
-              padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+              padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.surfaceVariant,
+                    AppColors.surfaceVariant.withValues(alpha: 0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Practice Guide',
-                    style: AppTypography.titleMedium(context).copyWith(
-                      color: AppColors.textLight,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.menu_book,
+                        color: AppColors.primaryCTA,
+                        size: 20,
+                      ),
+                      SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+                      Text(
+                        'Practice Guide',
+                        style: AppTypography.titleMedium(context).copyWith(
+                          color: AppColors.textLight,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
                   ),
                   SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
                   Text(
                     currentPractice!.getPracticeText(selectedDuration ?? currentPractice!.availableDurations.first),
                     style: AppTypography.bodyMedium(context).copyWith(
                       color: AppColors.textLight.withOpacity(0.9),
-                      height: 1.5,
+                      height: 1.6,
+                      letterSpacing: 0.3,
                     ),
                   ),
                 ],
@@ -762,18 +874,12 @@ class _PracticePlayerScreenState extends State<PracticePlayerScreen> {
   }
 
   void _onPracticeComplete() {
-    print('=== PRACTICE COMPLETION CALLBACK TRIGGERED ===');
-    print('_onPracticeComplete called');
-    print('Setting completion state: isPlaying=false, isCompleted=true');
-    
-    setState(() {
-      isPlaying = false;
-      isCompleted = true;
-    });
-    
-    print('Completion state set successfully');
-    print('Audio should be stopped by AudioService');
-    print('=== PRACTICE COMPLETION COMPLETE ===');
+    if (mounted) {
+      setState(() {
+        isPlaying = false;
+        isCompleted = true;
+      });
+    }
   }
 
   void _togglePlayPause() {

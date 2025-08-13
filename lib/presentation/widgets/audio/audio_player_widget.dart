@@ -11,6 +11,7 @@ class AudioPlayerWidget extends StatefulWidget {
   final Duration? practiceDuration; // For practice sessions
   final Duration? practiceElapsed; // Current practice elapsed time
   final VoidCallback? onRestart; // Callback for practice restart
+  final String? practiceName; // Name of the practice for display
 
   const AudioPlayerWidget({
     super.key,
@@ -20,6 +21,7 @@ class AudioPlayerWidget extends StatefulWidget {
     this.practiceDuration,
     this.practiceElapsed,
     this.onRestart,
+    this.practiceName,
   });
 
   @override
@@ -301,10 +303,17 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
     _syncAudioState();
     
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.secondary,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primaryCTA.withValues(alpha: 0.08),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -320,19 +329,33 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   color: _isLoading 
                       ? AppColors.textLight.withValues(alpha: 0.3)
                       : AppColors.textLight,
-                  size: 28,
+                  size: 20,
                 ),
                 tooltip: 'Skip Backward 10s',
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
 
-              // Play/Pause Button
+              // Play/Pause Button - Enhanced
               Container(
-                width: 80,
-                height: 80,
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryCTA,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.primaryCTA,
+                      AppColors.primaryCTA.withValues(alpha: 0.8),
+                    ],
+                  ),
                   shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primaryCTA.withValues(alpha: 0.2),
+                      blurRadius: 6,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: IconButton(
                   onPressed: _isLoading ? null : _playPause,
@@ -343,11 +366,11 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                         ? Icons.pause
                         : Icons.play_arrow,
                     color: AppColors.textLight,
-                    size: 40,
+                    size: 28,
                   ),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 8),
 
               // Skip Forward Button
               IconButton(
@@ -357,7 +380,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                   color: _isLoading 
                       ? AppColors.textLight.withValues(alpha: 0.3)
                       : AppColors.textLight,
-                  size: 28,
+                  size: 20,
                 ),
                 tooltip: 'Skip Forward 10s',
               ),
@@ -365,7 +388,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
 
           // Restart Button (moved below main controls)
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -374,7 +397,7 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                 icon: Icon(
                   Icons.replay,
                   color: AppColors.textLight,
-                  size: 24,
+                  size: 18,
                 ),
                 tooltip: 'Restart',
               ),
@@ -382,21 +405,23 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ),
 
           if (widget.showProgress) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: 12),
 
             // Progress Bar
             Column(
               children: [
-                // Progress Slider - Show practice progress in practice mode, audio progress otherwise
+                // Progress Slider - Enhanced with better visual feedback
                 SliderTheme(
                   data: SliderTheme.of(context).copyWith(
                     activeTrackColor: AppColors.primaryCTA,
-                    inactiveTrackColor: AppColors.primary.withValues(alpha: 0.3),
+                    inactiveTrackColor: AppColors.primary.withValues(alpha: 0.2),
                     thumbColor: AppColors.primaryCTA,
                     thumbShape: const RoundSliderThumbShape(
                       enabledThumbRadius: 8,
                     ),
                     trackHeight: 4,
+                    overlayColor: AppColors.primaryCTA.withValues(alpha: 0.1),
+                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
                   ),
                   child: Slider(
                     value: widget.practiceDuration != null
@@ -411,32 +436,64 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                       );
                       _seekTo(newPosition);
                     },
+                    onChangeStart: (value) {
+                      // Visual feedback when user starts dragging
+                      debugPrint('User started dragging progress bar');
+                    },
+                    onChangeEnd: (value) {
+                      // Visual feedback when user stops dragging
+                      debugPrint('User stopped dragging progress bar');
+                    },
                   ),
                 ),
 
-                // Time Display - Show practice time in practice mode, audio time otherwise
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      widget.practiceDuration != null
-                          ? _formatDuration(AudioService.elapsedTime)
-                          : _formatDuration(_position),
-                      style: const TextStyle(
-                        color: AppColors.textLight,
-                        fontSize: 14,
-                      ),
+                // Time Display - Enhanced with better styling
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceVariant,
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color: AppColors.primaryCTA.withValues(alpha: 0.2),
+                      width: 1,
                     ),
-                    Text(
-                      widget.practiceDuration != null
-                          ? '${widget.practiceDuration!.inMinutes}:${(widget.practiceDuration!.inSeconds % 60).toString().padLeft(2, '0')}'
-                          : _formatDuration(_duration),
-                      style: const TextStyle(
-                        color: AppColors.textLight,
-                        fontSize: 14,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.access_time,
+                            color: AppColors.primaryCTA,
+                            size: 12,
+                          ),
+                          const SizedBox(width: 3),
+                          Text(
+                            widget.practiceDuration != null
+                                ? _formatDuration(AudioService.elapsedTime)
+                                : _formatDuration(_position),
+                            style: TextStyle(
+                              color: AppColors.textLight,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                      Text(
+                        widget.practiceDuration != null
+                            ? '${widget.practiceDuration!.inMinutes}:${(widget.practiceDuration!.inSeconds % 60).toString().padLeft(2, '0')}'
+                            : _formatDuration(_duration),
+                        style: TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -444,22 +501,22 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           
           // Audio info card - positioned at center bottom
           if (widget.practiceDuration != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             Center(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: AppColors.primaryCTA.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(16),
                   border: Border.all(
                     color: AppColors.primaryCTA.withValues(alpha: 0.3),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primaryCTA.withValues(alpha: 0.1),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      color: AppColors.primaryCTA.withValues(alpha: 0.08),
+                      blurRadius: 6,
+                      offset: const Offset(0, 1),
                     ),
                   ],
                 ),
@@ -469,14 +526,14 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
                     Icon(
                       Icons.music_note,
                       color: AppColors.primaryCTA,
-                      size: 18,
+                      size: 14,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Text(
-                      'Ambient Music Playing',
+                      widget.practiceName ?? 'Practice Audio',
                       style: TextStyle(
                         color: AppColors.primaryCTA,
-                        fontSize: 13,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

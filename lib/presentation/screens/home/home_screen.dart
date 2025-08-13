@@ -134,22 +134,92 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Banner Card
+              _buildBannerCard(),
+              SizedBox(height: 1),
+              
               // Welcome Section
               _buildWelcomeSection(),
-              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+              SizedBox(height: 1),
 
               // Start Practice Button - Centered
               Center(
                 child: _buildStartPracticeButton(),
               ),
-              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+              SizedBox(height: 1),
 
               // Progress Section
               _buildProgressSection(),
-              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+              SizedBox(height: 1),
 
               // Quick Actions
               _buildQuickActions(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBannerCard() {
+    return CustomCard(
+      child: Container(
+        height: 120,
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryCTA.withValues(alpha: 0.15),
+              AppColors.secondaryCTA.withValues(alpha: 0.1),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+          child: Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Mindful Travel',
+                      style: AppTypography.headlineSmall(context).copyWith(
+                        color: AppColors.textLight,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+                    Text(
+                      'Transform your journey into a meditation',
+                      style: AppTypography.bodyMedium(context).copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                flex: 1,
+                child: Center(
+                  child: Container(
+                    padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 0.75),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryCTA.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                    ),
+                    child: Icon(
+                      Icons.self_improvement,
+                      color: AppColors.primaryCTA,
+                      size: ResponsiveUtils.getResponsiveIconSize(context, 32.0),
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -212,15 +282,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildStartPracticeButton() {
     return CustomCard(
       onTap: () => Navigator.pushNamed(context, AppRouter.practice),
-      child: Container(
-        height: ResponsiveUtils.getResponsiveButtonHeight(context) * 4, // Responsive height
+      child: Padding(
         padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Container(
-              padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+              padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 0.75),
               decoration: BoxDecoration(
                 color: AppColors.primaryCTA.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
@@ -228,29 +297,25 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Icon(
                 Icons.self_improvement,
                 color: AppColors.primaryCTA,
-                size: ResponsiveUtils.getResponsiveIconSize(context, 48.0),
+                size: ResponsiveUtils.getResponsiveIconSize(context, 36.0),
               ),
             ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
-            Flexible(
-              child: Text(
-                'Start Mindful Ride',
-                style: AppTypography.headlineSmall(context).copyWith(
-                  color: AppColors.textLight,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
+            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.75),
+            Text(
+              'Start Mindful Ride',
+              style: AppTypography.headlineSmall(context).copyWith(
+                color: AppColors.textLight,
+                fontWeight: FontWeight.bold,
               ),
+              textAlign: TextAlign.center,
             ),
             SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
-            Flexible(
-              child: Text(
-                'Begin your journey to mindfulness',
-                style: AppTypography.bodyMedium(context).copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
+            Text(
+              'Begin your journey to mindfulness',
+              style: AppTypography.bodyMedium(context).copyWith(
+                color: AppColors.textSecondary,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -293,6 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return CustomCard(
+      onTap: () => Navigator.pushNamed(context, AppRouter.streak),
       child: Padding(
         padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
         child: Column(
@@ -311,6 +377,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: AppTypography.titleMedium(context).copyWith(
                     fontWeight: FontWeight.w600,
                   ),
+                ),
+                const Spacer(),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: AppColors.textSecondary,
+                  size: 16.0,
                 ),
               ],
             ),
@@ -416,8 +488,8 @@ class _HomeScreenState extends State<HomeScreen> {
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           crossAxisCount: 2,
-          crossAxisSpacing: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
-          mainAxisSpacing: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
+          crossAxisSpacing: 2,
+          mainAxisSpacing: 2,
           children: [
             _buildQuickActionCard(
               'Journal',
@@ -453,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return CustomCard(
       onTap: onTap,
       child: Padding(
-        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -469,7 +541,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 size: ResponsiveUtils.getResponsiveIconSize(context, 24.0),
               ),
             ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
+            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
             Flexible(
               child: Text(
                 title,

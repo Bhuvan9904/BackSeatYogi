@@ -3,7 +3,7 @@ import '../../../app/theme/app_theme.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/utils/responsive_utils.dart';
 import '../../widgets/common/custom_card.dart';
-import '../../widgets/common/custom_button.dart';
+
 import '../../widgets/common/main_layout.dart';
 import '../../../core/services/hive_storage_service.dart';
 import '../../../data/models/travel_log.dart';
@@ -22,7 +22,6 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
   
   // Filter categories and options
   final Map<String, List<String>> filterCategories = {
-    'Travel Type': ['All', ...AppConstants.travelTypes],
     'Mood': ['All', ...AppConstants.moodTags],
   };
 
@@ -37,11 +36,14 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
 
   Future<void> _loadTravelLogs() async {
     try {
+      print('Loading travel logs...');
       final logs = await HiveStorageService.getTravelLogs();
+      print('Loaded ${logs.length} travel logs');
       setState(() {
         travelLogs = logs;
         isLoading = false;
       });
+      print('Travel logs state updated. Count: ${travelLogs.length}');
     } catch (e) {
       print('Error loading travel logs: $e');
       setState(() {
@@ -61,6 +63,13 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
           actions: [
             IconButton(
               icon: Icon(
+                Icons.refresh,
+                size: ResponsiveUtils.getResponsiveIconSize(context, 24.0),
+              ),
+              onPressed: _loadTravelLogs,
+            ),
+            IconButton(
+              icon: Icon(
                 Icons.filter_list,
                 size: ResponsiveUtils.getResponsiveIconSize(context, 24.0),
               ),
@@ -68,16 +77,207 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
             ),
           ],
         ),
-        body: SingleChildScrollView(
+        body: Padding(
           padding: ResponsiveUtils.getResponsivePadding(context),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
-              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
+              _buildSimpleHeader(),
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
               _buildFilterChip(),
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+              Expanded(
+                child: _buildTravelLogsList(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSimpleHeader() {
+    return CustomCard(
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryCTA.withValues(alpha: 0.08),
+              AppColors.secondaryCTA.withValues(alpha: 0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header Row
+              Row(
+                children: [
+                  Container(
+                    padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.primaryCTA.withValues(alpha: 0.15),
+                          AppColors.primaryCTA.withValues(alpha: 0.08),
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.primaryCTA.withValues(alpha: 0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      Icons.history,
+                      color: AppColors.primaryCTA,
+                      size: ResponsiveUtils.getResponsiveIconSize(context, 28.0),
+                    ),
+                  ),
+                  SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Your Travel Journey',
+                          style: AppTypography.headlineSmall(context).copyWith(
+                            color: AppColors.textLight,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+                        Text(
+                          'Track your mindful moments and reflections',
+                          style: AppTypography.bodyMedium(context).copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
-              _buildTravelLogsList(),
+              
+              // Stats Row - Responsive Layout
+              ResponsiveUtils.getScreenSize(context) == ScreenSize.mobile
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildQuickStat(
+                                'Total',
+                                '${travelLogs.length}',
+                                Icons.article,
+                                AppColors.primaryCTA,
+                              ),
+                            ),
+                            SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context)),
+                            Expanded(
+                              child: _buildQuickStat(
+                                'This Month',
+                                '${travelLogs.where((log) => log.date.month == DateTime.now().month).length}',
+                                Icons.calendar_today,
+                                AppColors.secondaryCTA,
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
+                              vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.25,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppColors.primaryCTA.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context) * 0.5),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.trending_up,
+                                  color: AppColors.primaryCTA.withValues(alpha: 0.7),
+                                  size: ResponsiveUtils.getResponsiveIconSize(context, 14.0),
+                                ),
+                                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+                                Text(
+                                  'Active',
+                                  style: AppTypography.labelSmall(context).copyWith(
+                                    color: AppColors.primaryCTA.withValues(alpha: 0.8),
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        _buildQuickStat(
+                          'Total',
+                          '${travelLogs.length}',
+                          Icons.article,
+                          AppColors.primaryCTA,
+                        ),
+                        SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context)),
+                        _buildQuickStat(
+                          'This Month',
+                          '${travelLogs.where((log) => log.date.month == DateTime.now().month).length}',
+                          Icons.calendar_today,
+                          AppColors.secondaryCTA,
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
+                            vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.25,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryCTA.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context) * 0.5),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.trending_up,
+                                color: AppColors.primaryCTA.withValues(alpha: 0.7),
+                                size: ResponsiveUtils.getResponsiveIconSize(context, 14.0),
+                              ),
+                              SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+                              Text(
+                                'Active',
+                                style: AppTypography.labelSmall(context).copyWith(
+                                  color: AppColors.primaryCTA.withValues(alpha: 0.8),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
             ],
           ),
         ),
@@ -88,14 +288,15 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
   Widget _buildHeader() {
     return CustomCard(
       child: Padding(
-        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
+        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 2),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header Section
             Row(
               children: [
                 Container(
-                  padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+                  padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
                   decoration: BoxDecoration(
                     color: AppColors.primaryCTA.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
@@ -106,7 +307,7 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                     size: ResponsiveUtils.getResponsiveIconSize(context, 32.0),
                   ),
                 ),
-                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context)),
+                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,6 +319,7 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
                       Text(
                         'Track your mindful moments and reflections',
                         style: AppTypography.bodyLarge(context).copyWith(
@@ -129,26 +331,152 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                 ),
               ],
             ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
-            Row(
-              children: [
-                _buildStatCard(
-                  'Total Logs',
-                  '${travelLogs.length}',
-                  Icons.article,
-                  AppColors.primaryCTA,
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 2),
+              
+              // Stats Section
+              Text(
+                'Quick Overview',
+                style: AppTypography.titleMedium(context).copyWith(
+                  color: AppColors.textLight,
+                  fontWeight: FontWeight.w600,
                 ),
-                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context)),
-                _buildStatCard(
-                  'This Month',
-                  '${travelLogs.where((log) => log.date.month == DateTime.now().month).length}',
-                  Icons.calendar_today,
-                  AppColors.secondaryCTA,
+              ),
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
+              ResponsiveUtils.getScreenSize(context) == ScreenSize.mobile
+                  ? Column(
+                      children: [
+                        _buildEnhancedStatCard(
+                          'Total Logs',
+                          '${travelLogs.length}',
+                          Icons.article,
+                          AppColors.primaryCTA,
+                          'All time entries',
+                        ),
+                        SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
+                        _buildEnhancedStatCard(
+                          'This Month',
+                          '${travelLogs.where((log) => log.date.month == DateTime.now().month).length}',
+                          Icons.calendar_today,
+                          AppColors.secondaryCTA,
+                          'Current month',
+                        ),
+                      ],
+                    )
+                  : Row(
+                      children: [
+                        _buildEnhancedStatCard(
+                          'Total Logs',
+                          '${travelLogs.length}',
+                          Icons.article,
+                          AppColors.primaryCTA,
+                          'All time entries',
+                        ),
+                        SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
+                        _buildEnhancedStatCard(
+                          'This Month',
+                          '${travelLogs.where((log) => log.date.month == DateTime.now().month).length}',
+                          Icons.calendar_today,
+                          AppColors.secondaryCTA,
+                          'Current month',
+                        ),
+                      ],
+                    ),
+            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
+            
+            // Stats Section
+            Text(
+              'Quick Overview',
+              style: AppTypography.titleMedium(context).copyWith(
+                color: AppColors.textLight,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
+            ResponsiveUtils.getScreenSize(context) == ScreenSize.mobile
+                ? Column(
+                    children: [
+                      _buildStatCard(
+                        'Total Logs',
+                        '${travelLogs.length}',
+                        Icons.article,
+                        AppColors.primaryCTA,
+                      ),
+                      SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
+                      _buildStatCard(
+                        'This Month',
+                        '${travelLogs.where((log) => log.date.month == DateTime.now().month).length}',
+                        Icons.calendar_today,
+                        AppColors.secondaryCTA,
+                      ),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      _buildStatCard(
+                        'Total Logs',
+                        '${travelLogs.length}',
+                        Icons.article,
+                        AppColors.primaryCTA,
+                      ),
+                      SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
+                      _buildStatCard(
+                        'This Month',
+                        '${travelLogs.where((log) => log.date.month == DateTime.now().month).length}',
+                        Icons.calendar_today,
+                        AppColors.secondaryCTA,
+                      ),
+                    ],
+                  ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickStat(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
+        vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.25,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context) * 0.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            color: color.withValues(alpha: 0.7),
+            size: ResponsiveUtils.getResponsiveIconSize(context, 14.0),
+          ),
+          SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  value,
+                  style: AppTypography.titleSmall(context).copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                Text(
+                  title,
+                  style: AppTypography.labelSmall(context).copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 10,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -156,7 +484,7 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Expanded(
       child: Container(
-        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
@@ -171,9 +499,9 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
             Icon(
               icon,
               color: color,
-              size: ResponsiveUtils.getResponsiveIconSize(context, 20.0),
+              size: ResponsiveUtils.getResponsiveIconSize(context, 24.0),
             ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.75),
             Text(
               value,
               style: AppTypography.headlineSmall(context).copyWith(
@@ -181,10 +509,96 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                 fontWeight: FontWeight.bold,
               ),
             ),
+            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
             Text(
               title,
               style: AppTypography.labelSmall(context).copyWith(
                 color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnhancedStatCard(String title, String value, IconData icon, Color color, String subtitle) {
+    return Expanded(
+      child: Container(
+        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withValues(alpha: 0.08),
+              color.withValues(alpha: 0.03),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+          border: Border.all(
+            color: color.withValues(alpha: 0.15),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                  ),
+                  child: Icon(
+                    icon,
+                    color: color,
+                    size: ResponsiveUtils.getResponsiveIconSize(context, 20.0),
+                  ),
+                ),
+                const Spacer(),
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
+                    vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.25,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                  ),
+                  child: Text(
+                    subtitle,
+                    style: AppTypography.labelSmall(context).copyWith(
+                      color: color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1),
+            Text(
+              value,
+              style: AppTypography.headlineMedium(context).copyWith(
+                color: color,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+            Text(
+              title,
+              style: AppTypography.titleSmall(context).copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
@@ -199,14 +613,14 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: ResponsiveUtils.getResponsiveSpacing(context),
-        vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
+        vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.75,
       ),
       child: Row(
         children: [
           Container(
             padding: EdgeInsets.symmetric(
-              horizontal: ResponsiveUtils.getResponsiveSpacing(context),
-              vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
+              horizontal: ResponsiveUtils.getResponsiveSpacing(context) * 1.25,
+              vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.75,
             ),
             decoration: BoxDecoration(
               color: AppColors.primaryCTA,
@@ -225,9 +639,9 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                 Icon(
                   Icons.filter_list,
                   color: AppColors.textLight,
-                  size: ResponsiveUtils.getResponsiveIconSize(context, 16.0),
+                  size: ResponsiveUtils.getResponsiveIconSize(context, 18.0),
                 ),
-                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.75),
                 Text(
                   '$selectedFilterCategory: $selectedFilter',
                   style: AppTypography.labelMedium(context).copyWith(
@@ -235,7 +649,7 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.75),
                 GestureDetector(
                   onTap: () {
                     setState(() {
@@ -244,7 +658,7 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                     });
                   },
                   child: Container(
-                    padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+                    padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
                     decoration: BoxDecoration(
                       color: AppColors.textLight.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
@@ -252,7 +666,7 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                     child: Icon(
                       Icons.close,
                       color: AppColors.textLight,
-                      size: ResponsiveUtils.getResponsiveIconSize(context, 14.0),
+                      size: ResponsiveUtils.getResponsiveIconSize(context, 16.0),
                     ),
                   ),
                 ),
@@ -279,9 +693,7 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
     List<TravelLog> filteredLogs = travelLogs;
     if (selectedFilter != null && selectedFilter != 'All') {
       filteredLogs = travelLogs.where((log) {
-        if (selectedFilterCategory == 'Travel Type') {
-          return log.travelType.toLowerCase() == selectedFilter!.toLowerCase();
-        } else if (selectedFilterCategory == 'Mood') {
+        if (selectedFilterCategory == 'Mood') {
           return log.mood?.toLowerCase() == selectedFilter!.toLowerCase();
         }
         return false;
@@ -293,53 +705,56 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
       return _buildEmptyFilteredState();
     }
 
-    return Column(
-      children: [
-        // Show filter results count
-        if (selectedFilter != null && selectedFilter != 'All') ...[
-          Container(
-            padding: EdgeInsets.symmetric(
-              horizontal: ResponsiveUtils.getResponsiveSpacing(context),
-              vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  color: AppColors.textSecondary,
-                  size: ResponsiveUtils.getResponsiveIconSize(context, 16.0),
-                ),
-                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
-                Text(
-                  'Showing ${filteredLogs.length} of ${travelLogs.length} logs',
-                  style: AppTypography.bodySmall(context).copyWith(
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Show filter results count
+          if (selectedFilter != null && selectedFilter != 'All') ...[
+            Container(
+              padding: EdgeInsets.symmetric(
+                horizontal: ResponsiveUtils.getResponsiveSpacing(context),
+                vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.75,
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
                     color: AppColors.textSecondary,
+                    size: ResponsiveUtils.getResponsiveIconSize(context, 18.0),
                   ),
-                ),
-              ],
+                  SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.75),
+                  Text(
+                    'Showing ${filteredLogs.length} of ${travelLogs.length} logs',
+                    style: AppTypography.bodySmall(context).copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1),
+          ],
+          // Log cards
+          ...filteredLogs.map((log) => _buildLogCard(log)).toList(),
         ],
-        // Log cards
-        ...filteredLogs.map((log) => _buildLogCard(log)).toList(),
-      ],
+      ),
     );
   }
 
   Widget _buildLogCard(TravelLog log) {
     return CustomCard(
-      margin: EdgeInsets.only(bottom: ResponsiveUtils.getResponsiveSpacing(context)),
+      margin: EdgeInsets.only(bottom: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
       onTap: () => _showLogDetails(log),
       child: Padding(
-        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 0.75),
+                  padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
                   decoration: BoxDecoration(
                     color: AppColors.primaryCTA.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
@@ -350,7 +765,7 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                     size: ResponsiveUtils.getResponsiveIconSize(context, 24.0),
                   ),
                 ),
-                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context)),
+                SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,20 +776,25 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                           color: AppColors.textLight,
                           fontWeight: FontWeight.bold,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+                      SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
                       Row(
                         children: [
                           Icon(
                             Icons.access_time,
                             color: AppColors.textSecondary,
-                            size: ResponsiveUtils.getResponsiveIconSize(context, 14.0),
+                            size: ResponsiveUtils.getResponsiveIconSize(context, 16.0),
                           ),
-                          SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
-                          Text(
-                            '${log.formattedDate} • ${log.formattedTime}',
-                            style: AppTypography.bodySmall(context).copyWith(
-                              color: AppColors.textSecondary,
+                          SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+                          Expanded(
+                            child: Text(
+                              '${log.formattedDate} • ${log.formattedTime}',
+                              style: AppTypography.bodySmall(context).copyWith(
+                                color: AppColors.textSecondary,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
@@ -383,62 +803,67 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                   ),
                 ),
                 if (log.mood != null)
-                  Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: ResponsiveUtils.getResponsiveSpacing(context) * 0.75,
-                      vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getMoodColor(log.mood!),
-                      borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
-                      boxShadow: [
-                        BoxShadow(
-                          color: _getMoodColor(log.mood!).withValues(alpha: 0.3),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          _getMoodEmoji(log.mood!),
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                        SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
-                        Text(
-                          log.mood![0].toUpperCase() + log.mood!.substring(1),
-                          style: AppTypography.labelSmall(context).copyWith(
-                            color: AppColors.textLight,
-                            fontWeight: FontWeight.w600,
+                  Flexible(
+                    child: Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: ResponsiveUtils.getResponsiveSpacing(context) * 0.75,
+                        vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getMoodColor(log.mood!),
+                        borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: _getMoodColor(log.mood!).withValues(alpha: 0.3),
+                            blurRadius: 4,
+                            offset: const Offset(0, 1),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            _getMoodEmoji(log.mood!),
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+                          Flexible(
+                            child: Text(
+                              log.mood![0].toUpperCase() + log.mood!.substring(1),
+                              style: AppTypography.labelSmall(context).copyWith(
+                                color: AppColors.textLight,
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
               ],
             ),
             if (log.practiceName != null) ...[
-              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.25),
               Container(
-                padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 0.75),
-                                  decoration: BoxDecoration(
-                    color: AppColors.secondaryCTA.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
-                    border: Border.all(
-                      color: AppColors.secondaryCTA.withValues(alpha: 0.2),
-                      width: 1,
-                    ),
+                padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+                decoration: BoxDecoration(
+                  color: AppColors.secondaryCTA.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                  border: Border.all(
+                    color: AppColors.secondaryCTA.withValues(alpha: 0.2),
+                    width: 1,
                   ),
+                ),
                 child: Row(
                   children: [
                     Icon(
                       Icons.self_improvement,
                       color: AppColors.secondaryCTA,
-                      size: ResponsiveUtils.getResponsiveIconSize(context, 16.0),
+                      size: ResponsiveUtils.getResponsiveIconSize(context, 18.0),
                     ),
-                    SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+                    SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.75),
                     Expanded(
                       child: Text(
                         '${log.practiceName}${log.practiceDuration != null ? ' • ${log.practiceDuration} min' : ''}',
@@ -446,6 +871,8 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                           color: AppColors.textSecondary,
                           fontWeight: FontWeight.w500,
                         ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -459,100 +886,210 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
   }
 
   Widget _buildEmptyState() {
-    return CustomCard(
-      child: Padding(
-        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 2),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
-              decoration: BoxDecoration(
-                color: AppColors.textSecondary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
-              ),
-              child: Icon(
-                Icons.history,
-                size: ResponsiveUtils.getResponsiveIconSize(context, 48.0),
-                color: AppColors.textSecondary,
-              ),
+    return Center(
+      child: Container(
+        margin: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+              spreadRadius: 0,
             ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
-            Text(
-              'No travel logs yet',
-              style: AppTypography.titleLarge(context).copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
-            Text(
-              'Your mindful journeys will appear here',
-              style: AppTypography.bodyMedium(context).copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-
           ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Compact icon container
+              Container(
+                width: ResponsiveUtils.getResponsiveIconSize(context, 70.0),
+                height: ResponsiveUtils.getResponsiveIconSize(context, 70.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.textSecondary.withValues(alpha: 0.15),
+                      AppColors.textSecondary.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                  border: Border.all(
+                    color: AppColors.textSecondary.withValues(alpha: 0.1),
+                    width: 1,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.history,
+                    size: ResponsiveUtils.getResponsiveIconSize(context, 40.0),
+                    color: AppColors.textSecondary.withValues(alpha: 0.8),
+                  ),
+                ),
+              ),
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
+              
+              // Compact title
+              Text(
+                'No Travel Logs Yet',
+                style: AppTypography.titleLarge(context).copyWith(
+                  color: AppColors.textLight,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+              
+              // Compact description
+              Text(
+                'Your mindful journeys will appear here once you start logging.',
+                style: AppTypography.bodyMedium(context).copyWith(
+                  color: AppColors.textSecondary,
+                  height: 1.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
+              
+
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildEmptyFilteredState() {
-    return CustomCard(
-      child: Padding(
-        padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 2),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
-              decoration: BoxDecoration(
-                color: AppColors.textSecondary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
-              ),
-              child: Icon(
-                Icons.filter_list_off,
-                size: ResponsiveUtils.getResponsiveIconSize(context, 48.0),
-                color: AppColors.textSecondary,
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
-            Text(
-              'No logs found',
-              style: AppTypography.titleLarge(context).copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
-            Text(
-              'No logs match your current filter: $selectedFilterCategory - $selectedFilter',
-              style: AppTypography.bodyMedium(context).copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
-            CustomButton(
-              text: 'Clear Filter',
-              type: ButtonType.secondary,
-              onPressed: () {
-                setState(() {
-                  selectedFilter = null;
-                  selectedFilterCategory = null;
-                });
-              },
+    return Center(
+      child: Container(
+        margin: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+              spreadRadius: 0,
             ),
           ],
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Compact icon container
+              Container(
+                width: ResponsiveUtils.getResponsiveIconSize(context, 70.0),
+                height: ResponsiveUtils.getResponsiveIconSize(context, 70.0),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.secondaryCTA.withValues(alpha: 0.15),
+                      AppColors.secondaryCTA.withValues(alpha: 0.05),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                  border: Border.all(
+                    color: AppColors.secondaryCTA.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.filter_list_off,
+                    size: ResponsiveUtils.getResponsiveIconSize(context, 40.0),
+                    color: AppColors.secondaryCTA.withValues(alpha: 0.8),
+                  ),
+                ),
+              ),
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
+              
+              // Compact title
+              Text(
+                'No Logs Found',
+                style: AppTypography.titleLarge(context).copyWith(
+                  color: AppColors.textLight,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+              
+              // Compact description
+              Text(
+                'No logs match: $selectedFilterCategory - $selectedFilter',
+                style: AppTypography.bodyMedium(context).copyWith(
+                  color: AppColors.textSecondary,
+                  height: 1.3,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
+              
+              // Compact clear filter button
+              Container(
+                padding: EdgeInsets.symmetric(
+                  horizontal: ResponsiveUtils.getResponsiveSpacing(context),
+                  vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.secondaryCTA.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                  border: Border.all(
+                    color: AppColors.secondaryCTA.withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      selectedFilter = null;
+                      selectedFilterCategory = null;
+                    });
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.clear_all,
+                        color: AppColors.secondaryCTA,
+                        size: ResponsiveUtils.getResponsiveIconSize(context, 18.0),
+                      ),
+                      SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+                      Text(
+                        'Clear Filter',
+                        style: AppTypography.labelMedium(context).copyWith(
+                          color: AppColors.secondaryCTA,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   void _showFilterDialog() {
+    // Store current filter state for dialog
+    String? tempFilterCategory = selectedFilterCategory;
+    String? tempFilter = selectedFilter;
+    
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -582,12 +1119,12 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                 Wrap(
                   spacing: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
                   children: filterCategories.keys.map((category) {
-                    final isSelected = selectedFilterCategory == category;
+                    final isSelected = tempFilterCategory == category;
                     return GestureDetector(
                       onTap: () {
                         setDialogState(() {
-                          selectedFilterCategory = isSelected ? null : category;
-                          selectedFilter = null;
+                          tempFilterCategory = isSelected ? null : category;
+                          tempFilter = null;
                         });
                       },
                       child: Container(
@@ -617,17 +1154,17 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                 SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 1.5),
                 
                 // Filter options for selected category
-                if (selectedFilterCategory != null) ...[
+                if (tempFilterCategory != null) ...[
                   Text(
-                    'Select $selectedFilterCategory',
+                    'Select $tempFilterCategory',
                     style: AppTypography.titleSmall(context).copyWith(
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
-                  ...filterCategories[selectedFilterCategory]!.map<Widget>((filter) {
-                    final isSelected = selectedFilter == filter;
+                  ...filterCategories[tempFilterCategory]!.map<Widget>((filter) {
+                    final isSelected = tempFilter == filter;
                     return ListTile(
                       contentPadding: EdgeInsets.zero,
                       leading: Icon(
@@ -644,10 +1181,10 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
                       ),
                       trailing: Radio<String>(
                         value: filter,
-                        groupValue: selectedFilter,
+                        groupValue: tempFilter,
                         onChanged: (value) {
                           setDialogState(() {
-                            selectedFilter = value;
+                            tempFilter = value;
                           });
                         },
                         activeColor: AppColors.primaryCTA,
@@ -686,7 +1223,8 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
             TextButton(
               onPressed: () {
                 setState(() {
-                  // Apply the filter
+                  selectedFilterCategory = tempFilterCategory;
+                  selectedFilter = tempFilter;
                 });
                 Navigator.pop(context);
               },
@@ -870,12 +1408,6 @@ class _TravelLogsScreenState extends State<TravelLogsScreen> {
     switch (filter.toLowerCase()) {
       case 'all':
         return Icons.list;
-      case 'car':
-        return Icons.directions_car;
-      case 'train':
-        return Icons.train;
-      case 'flight':
-        return Icons.flight;
       case 'calm':
         return Icons.self_improvement;
       case 'focused':

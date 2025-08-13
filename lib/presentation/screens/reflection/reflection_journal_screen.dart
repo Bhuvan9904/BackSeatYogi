@@ -747,6 +747,7 @@ class _ReflectionJournalScreenState extends State<ReflectionJournalScreen> {
               final reflection = reflections[index];
               return CustomCard(
                 margin: EdgeInsets.only(bottom: ResponsiveUtils.getResponsiveSpacing(context)),
+                onTap: () => _showReflectionDetails(reflection),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -793,6 +794,11 @@ class _ReflectionJournalScreenState extends State<ReflectionJournalScreen> {
                               ],
                             ),
                           ),
+                        Icon(
+                          Icons.arrow_forward_ios,
+                          color: AppColors.textSecondary,
+                          size: 16.0,
+                        ),
                       ],
                     ),
                     SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
@@ -801,6 +807,8 @@ class _ReflectionJournalScreenState extends State<ReflectionJournalScreen> {
                       style: AppTypography.bodyMedium(context).copyWith(
                         color: AppColors.textLight,
                       ),
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
@@ -1151,5 +1159,120 @@ class _ReflectionJournalScreenState extends State<ReflectionJournalScreen> {
         ),
       );
     }
+  }
+
+  void _showReflectionDetails(TravelLog reflection) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.self_improvement,
+              color: AppColors.primaryCTA,
+              size: ResponsiveUtils.getResponsiveIconSize(context, 24.0),
+            ),
+            SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context)),
+            Expanded(
+              child: Text(
+                'Reflection Details',
+                style: AppTypography.titleLarge(context).copyWith(
+                  color: AppColors.textLight,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Date and Mood
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today,
+                    color: AppColors.textSecondary,
+                    size: ResponsiveUtils.getResponsiveIconSize(context, 16.0),
+                  ),
+                  SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.5),
+                  Text(
+                    reflection.formattedDate,
+                    style: AppTypography.bodyMedium(context).copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (reflection.mood != null)
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: ResponsiveUtils.getResponsiveSpacing(context) * 0.75,
+                        vertical: ResponsiveUtils.getResponsiveSpacing(context) * 0.5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _getMoodColor(reflection.mood!),
+                        borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            moodEmojis[reflection.mood!] ?? '😊',
+                            style: const TextStyle(fontSize: 14),
+                          ),
+                          SizedBox(width: ResponsiveUtils.getResponsiveSpacing(context) * 0.25),
+                          Text(
+                            reflection.mood![0].toUpperCase() + reflection.mood!.substring(1),
+                            style: AppTypography.labelMedium(context).copyWith(
+                              color: AppColors.textLight,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+              SizedBox(height: ResponsiveUtils.getResponsiveSpacing(context)),
+              
+              // Reflection Content
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(ResponsiveUtils.getResponsiveSpacing(context)),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceVariant.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(ResponsiveUtils.getResponsiveCardRadius(context)),
+                  border: Border.all(
+                    color: AppColors.surfaceVariant,
+                    width: 1,
+                  ),
+                ),
+                child: Text(
+                  reflection.reflection ?? 'No reflection content',
+                  style: AppTypography.bodyMedium(context).copyWith(
+                    color: AppColors.textLight,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Close',
+              style: AppTypography.labelLarge(context).copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
