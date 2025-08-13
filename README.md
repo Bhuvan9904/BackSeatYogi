@@ -191,7 +191,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 📞 Support
 
 - **Issues**: [GitHub Issues](https://github.com/Bhuvan9904/BackSeatYogi/issues)
-- **Email**: chbhuvi111@gmail.com
+- **Email**: chbhuvi111@gmail.com (Personal)
 - **LinkedIn**: [Ch Bhuvan Kumar](https://linkedin.com/in/ch-bhuvan-kumar)
 
 ## 🎯 Roadmap
